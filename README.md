@@ -38,10 +38,12 @@ $ npm install
 $ npm run start
 
 # watch mode
-$ npm run start:dev
+$ npm run start:portal:dev
+$ npm run start:admin:dev
 
 # production mode
-$ npm run start:prod
+$ npm run start:prod:admin
+$ npm run start:prod:portal
 ```
 
 ## Run tests
