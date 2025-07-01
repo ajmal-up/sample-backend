@@ -42,8 +42,8 @@ $ npm run start:portal:dev
 $ npm run start:admin:dev
 
 # production mode
-$ npm run start:prod:admin
-$ npm run start:prod:portal
+$ npm run start:admin:prod
+$ npm run start:portal:prod
 ```
 
 ## Run tests
