@@ -1,0 +1,31 @@
+# Stage 1: Base image build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy root-level package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy all source code
+COPY apps apps/
+COPY nest-cli.json ./
+COPY tsconfig*.json ./
+
+# Build the admin app
+RUN npm run build -- admin
+
+# Stage 2: Final runtime image
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Copy production node_modules and built app
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3001
+
+CMD ["node", "dist/apps/admin/main.js"]
