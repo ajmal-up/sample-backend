@@ -1,0 +1,59 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_ADMIN_REPO: 204696493238.dkr.ecr.us-east-1.amazonaws.com/admin
+  ECR_PORTAL_REPO: 204696493238.dkr.ecr.us-east-1.amazonaws.com/portal
+  K8S_MANIFEST_DIR: k8s
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push admin image
+        run: |
+          docker build -t $ECR_ADMIN_REPO:${{ github.run_number }} -f Dockerfile-admin .
+          docker push $ECR_ADMIN_REPO:${{ github.run_number }}
+
+      - name: Build and push portal image
+        run: |
+          docker build -t $ECR_PORTAL_REPO:${{ github.run_number }} -f Dockerfile-portal .
+          docker push $ECR_PORTAL_REPO:${{ github.run_number }}
+
+      - name: Update K8s manifests with image tags
+        run: |
+          find $K8S_MANIFEST_DIR -name 'deployment.yaml' -exec sed -i \
+            -e "s|{{ADMIN_IMAGE}}|$ECR_ADMIN_REPO:${{ github.run_number }}|g" \
+            -e "s|{{PORTAL_IMAGE}}|$ECR_PORTAL_REPO:${{ github.run_number }}|g" {} +
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region $AWS_REGION --name a6-eks-demo
+
+      - name: Deploy to EKS
+        run: |
+          kubectl apply -R -f $K8S_MANIFEST_DIR
