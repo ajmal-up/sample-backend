@@ -20,7 +20,7 @@ spec:
       labels:
         app: portal
     spec:
-      aaffinity:
+      affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - weight: 100
