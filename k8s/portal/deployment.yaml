@@ -44,9 +44,9 @@ spec:
           image: {{PORTAL_IMAGE}}
           ports:
             - containerPort: 3000
-          env:
-            - name: NODE_ENV
-              value: "production"
+          # env:
+          #   - name: NODE_ENV
+          #     value: "production"
           resources:
             requests:
               cpu: "100m"
